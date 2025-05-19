@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>大乐透分析工具</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            width: 100%;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+            padding: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+
+
+        .number {
+            /* 使用 inline-flex 以便更好地控制对齐 */
+            display: inline-flex;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            border: 1px solid #000;
+            margin: 5px;
+            font-size: 20px;
+            border-radius: 50%;
+            text-align: center;
+            /* 水平居中 */
+            justify-content: center;
+            /* 垂直居中 */
+            align-items: center; 
+        }
+
+        .red {
+            background-color: red;
+            color: white;
+        }
+
+        .blue {
+            background-color: blue;
+            color: white;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+
+
+
+
+        .container {
+            background-color: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #2196F3;
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        h2 {
+            font-size: 16px;
+            margin: 15px 0 10px;
+            color: #333;
+            font-weight: 600;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin: 10px 0;
+            transition: background-color 0.2s;
+            font-weight: 500;
+        }
+
+        .button:active {
+            background-color: #1976D2;
+        }
+
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .result {
+            margin-top: 15px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin: 10px 0;
+        }
+
+        .number-cell {
+            background-color: #e3f2fd;
+            padding: 8px 2px;
+            text-align: center;
+            border-radius: 6px;
+            font-size: 12px;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-break: break-all;
+        }
+
+        .back-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            margin: 10px 0;
+        }
+
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .error {
+            color: #d32f2f;
+            margin: 10px 0;
+            padding: 12px;
+            background-color: #ffebee;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .recommendation {
+            background-color: #e8f5e9;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .recommendation p {
+            margin: 8px 0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .number-highlight {
+            color: #2196F3;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .history-list {
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .history-date {
+            color: #666;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .history-numbers {
+            display: flex;
+            gap: 5px;
+        }
+
+        .history-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .front-number {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+
+        .back-number {
+            background-color: #e3f2fd;
+            color: #1976D2;
+        }
+
+        .distribution-info {
+            color: #666;
+            font-size: 8px;
+            font-style: italic;
+        }
+
+        .analysis-section {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .analysis-item {
+            background-color: white;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .analysis-item-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .analysis-numbers {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .hot-number {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+
+        .cold-number {
+            background-color: #e3f2fd;
+            color: #1976D2;
+        }
+
+        .mixed-number {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .number-badge {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .frequency-label {
+            font-size: 10px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .group-container {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+        }
+
+        .group-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .group-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #manualRecommendation,
+        #recommendation {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        p {
+            margin: 5px 0;
+        }
+
+        @media (max-width: 360px) {
+            .grid {
+                gap: 4px;
+            }
+
+            .back-grid {
+                gap: 4px;
+            }
+
+            .number-cell {
+                font-size: 11px;
+                min-height: 32px;
+            }
+
+            .history-number {
+                width: 20px;
+                height: 20px;
+                font-size: 11px;
+            }
+
+            .analysis-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .group-container {
+                margin-bottom: 10px;
+                padding: 8px;
+            }
+
+            .group-title {
+                font-size: 12px;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .input-group-item {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .input-group label {
+            font-weight: bold;
+            margin-bottom: 2px;
+            font-size: 12px;
+        }
+
+        .input-group input[type="text"] {
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            height: 32px;
+        }
+
+        .input-group small {
+            font-size: 10px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .number-badge.red-ball {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+
+        .number-badge.blue-ball {
+            background-color: #e3f2fd;
+            color: #1976D2;
+        }
+
+        .recommendation-numbers,
+        .manual-recommendation-numbers {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            overflow-x: auto;
+            white-space: nowrap;
+            align-items: center;
+        }
+
+        .floating-config {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            cursor: grab;
+            max-width: 90%;
+            overflow: hidden;
+        }
+
+        .floating-config:active {
+            cursor: grabbing;
+        }
+
+        #toggleConfigBtn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s, transform 0.2s;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        #toggleConfigBtn:hover {
+            background-color: #1976D2;
+            transform: scale(1.1);
+        }
+
+        .config-panel {
+            display: none;
+            background-color: white;
+            padding: 10px;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .config-panel.show {
+            display: block;
+        }
+
+        .config-panel h2 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .input-group-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .input-group input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input[type="text"]:focus {
+            border-color: #2196F3;
+            outline: none;
+        }
+
+        .input-group small {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        #manualGenerateBtn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        #manualGenerateBtn:hover {
+            background-color: #1976D2;
+        }
+
+        @media (max-width: 360px) {
+            .config-panel {
+                padding: 1px;
+            }
+        }
+
+        .inline-select {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .tab {
+        overflow: hidden;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 17px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 6px 12px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+    </style>
+    <!-- 引入 Chart.js 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'GenerateNumbers')">精选生成</button>
+        <button class="tablinks" onclick="openTab(event, 'OtherContent')">深度生成</button>
+    </div>
+    <div id="GenerateNumbers" class="tabcontent">
+        <h1>大乐透选号程序</h1>
+        <button onclick="generateNumbers()" class="button">生成号码</button>
+        <div id="numbers" style="text-align: center;"></div> 
+    </div>
+    
+    <div id="OtherContent" class="tabcontent" style="display:none;">
+        <div class="container" id="mainContainer"> 
+            <h1>大乐透分析工具</h1>
+            <button id="analyzeBtn" class="button">开始分析</button>
+            <div id="loading" class="loading" style="display: none;">
+                正在获取数据...
+            </div>
+            <div id="error" class="error" style="display: none;"></div>
+            <div id="result" class="result" style="display: none;">
+                <div id="recommendationSection">
+                    <h2>推荐号</h2>
+                    <div id="recommendation"></div>
+                </div>
+                <div class="floating-config" id="floatingConfig">
+                    <button id="toggleConfigBtn">手工选号</button>
+                    <div id="configPanel" class="config-panel">
+                        <!-- <h2>手工选号</h2> -->
+                        <div id="errorMessage"
+                            style="color: red; display: none; margin-bottom: 10px; font-size: 12px; margin-top: 2px;">
+                            分布比例不正确：前区总和应为5，后区总和应为2。</div>
+                        <div class="input-group">
+                            <div class="input-group-item">
+                                <label for="frontZoneInput">前区比例</label>
+                                <div class="inline-select">
+                                    <select id="frontZoneInput1">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2" selected>2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+                                    <select id="frontZoneInput2">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2" selected>2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+                                    <select id="frontZoneInput3">
+                                        <option value="0">0</option>
+                                        <option value="1" selected>1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+                                    <span style="color: #1976D2;">总和应为5</span>
+                                </div>
+                                <!-- <small>总和应为5</small> -->
+                            </div>
+                            <div class="input-group-item">
+                                <label for="backZoneInput">后区比例</label>
+                                <div class="inline-select">
+                                    <select id="backZoneInput1">
+                                        <option value="0">0</option>
+                                        <option value="1" selected>1</option>
+                                        <option value="2">2</option>
+                                    </select>
+                                    <select id="backZoneInput2">
+                                        <option value="0">0</option>
+                                        <option value="1" selected>1</option>
+                                        <option value="2">2</option>
+                                    </select>
+                                    <span style="color: #1976D2;">总和应为2</span>
+                                </div>
+                                <!-- <small>总和应为2</small> -->
+                            </div>
+                        </div>
+                        <button id="manualGenerateBtn">生成手工分布比例号</button>
+                        <div id="manualRecommendation" style="display: none;"></div>
+                    </div>
+                </div>
+                <h2>冷热号分析</h2>
+                <div id="analysis" class="analysis-section">
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <div class="analysis-item-title">热号选</div>
+                            <div id="hotNumbers" class="analysis-numbers"></div>
+                        </div>
+                        <div class="analysis-item">
+                            <div class="analysis-item-title">冷号选</div>
+                            <div id="coldNumbers" class="analysis-numbers"></div>
+                        </div>
+                        <div class="analysis-item">
+                            <div class="analysis-item-title">冷热混选</div>
+                            <div id="mixedNumbers" class="analysis-numbers"></div>
+                        </div>
+                    </div>
+                </div>
+                <h2>历史开奖记录
+                    <input type="date" id="historyDateSelect" />
+                </h2>
+                <!-- <div>
+                    <label for="historyDateSelect">选择日期范围：</label>
+                    <input type="date" id="historyDateSelect" />
+                </div> -->
+                <div id="historyList" class="history-list"></div>
+                <h2>前区号码频率分布</h2>
+                <div id="frontGrid" class="grid"></div>
+                <h2>后区号码频率分布</h2>
+                <div id="backGrid" class="back-grid"></div>
+                <h2>前后区小区分布走势图</h2>
+                <div>
+                    <select id="timeRangeSelect">
+                        <option value="7">一周</option>
+                        <option value="30">一个月</option>
+                        <option value="90">三个月</option>
+                        <option value="180">半年</option>
+                    </select>
+                </div>
+                <canvas id="zoneTrendChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('.tablinks').click();
+            const API_URL = 'https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=1000000000&isVerify=1&pageNo=1';
+
+            // 提升 data 变量到全局作用域
+            let data;
+
+            function showLoading() {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('error').style.display = 'none';
+                document.getElementById('result').style.display = 'none';
+            }
+
+            function showError(message) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = message;
+            }
+
+            function showResult() {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'none';
+                document.getElementById('result').style.display = 'block';
+            }
+
+            function analyzeFrequencyAndZone(data) {
+                const frontFrequency = {};
+                const backFrequency = {};
+                const frontZoneDistribution = [0, 0, 0];
+                const backZoneDistribution = [0, 0];
+
+                data.forEach(item => {
+                    const numbers = item.lotteryDrawResult.split(' ');
+                    const frontNumbers = numbers.slice(0, 5).map(Number);
+                    const backNumbers = numbers.slice(5).map(Number);
+
+                    frontNumbers.forEach(num => {
+                        frontFrequency[num] = (frontFrequency[num] || 0) + 1;
+                        if (num >= 1 && num <= 15) frontZoneDistribution[0]++;
+                        else if (num >= 16 && num <= 25) frontZoneDistribution[1]++;
+                        else if (num >= 26 && num <= 35) frontZoneDistribution[2]++;
+                    });
+
+                    backNumbers.forEach(num => {
+                        backFrequency[num] = (backFrequency[num] || 0) + 1;
+                        if (num >= 1 && num <= 8) backZoneDistribution[0]++;
+                        else if (num >= 9 && num <= 12) backZoneDistribution[1]++;
+                    });
+                });
+
+                return { frontFrequency, backFrequency, frontZoneDistribution, backZoneDistribution };
+            }
+
+            function analyzeHotColdNumbers(frequency, totalDraws) {
+                const frontNumbers = [];
+                const backNumbers = [];
+
+                // 计算前区号码出现频率
+                for (let i = 1; i <= 35; i++) {
+                    const count = frequency.frontFrequency[i] || 0;
+                    const rate = count / totalDraws;
+                    frontNumbers.push({ number: i, count, rate });
+                }
+
+                // 计算后区号码出现频率
+                for (let i = 1; i <= 12; i++) {
+                    const count = frequency.backFrequency[i] || 0;
+                    const rate = count / totalDraws;
+                    backNumbers.push({ number: i, count, rate });
+                }
+
+                // 按出现频率排序
+                frontNumbers.sort((a, b) => b.rate - a.rate);
+                backNumbers.sort((a, b) => b.rate - a.rate);
+
+                // 获取热号（前30%）
+                const hotFrontCount = Math.ceil(frontNumbers.length * 0.3);
+                const hotBackCount = Math.ceil(backNumbers.length * 0.3);
+                const hotFront = frontNumbers.slice(0, hotFrontCount);
+                const hotBack = backNumbers.slice(0, hotBackCount);
+
+                // 获取冷号（后30%）
+                const coldFront = frontNumbers.slice(-hotFrontCount).reverse();
+                const coldBack = backNumbers.slice(-hotBackCount).reverse();
+
+                return {
+                    hotFront,
+                    hotBack,
+                    coldFront,
+                    coldBack
+                };
+            }
+
+            function generateHotNumbers(hotFront, hotBack) {
+                const groups = [];
+                // 生成三组热号
+                for (let i = 0; i < 3; i++) {
+                    const front = [...hotFront]
+                        .sort(() => Math.random() - 0.5)
+                        .slice(0, 5)
+                        .sort((a, b) => a.number - b.number);
+                    const back = [...hotBack]
+                        .sort(() => Math.random() - 0.5)
+                        .slice(0, 2)
+                        .sort((a, b) => a.number - b.number);
+                    groups.push({ front, back });
+                }
+                return groups;
+            }
+
+            function generateColdNumbers(coldFront, coldBack) {
+                const groups = [];
+                // 生成三组冷号
+                for (let i = 0; i < 3; i++) {
+                    const front = [...coldFront]
+                        .sort(() => Math.random() - 0.5)
+                        .slice(0, 5)
+                        .sort((a, b) => a.number - b.number);
+                    const back = [...coldBack]
+                        .sort(() => Math.random() - 0.5)
+                        .slice(0, 2)
+                        .sort((a, b) => a.number - b.number);
+                    groups.push({ front, back });
+                }
+                return groups;
+            }
+
+            function generateMixedNumbers(hotFront, hotBack, coldFront, coldBack) {
+                const groups = [];
+                // 生成三组冷热混选
+                for (let i = 0; i < 3; i++) {
+                    // 前区：3个热号 + 2个冷号
+                    const hotFrontSelected = [...hotFront]
+                        .sort(() => Math.random() - 0.5)
+                        .slice(0, 3);
+                    const coldFrontSelected = [...coldFront]
+                        .sort(() => Math.random() - 0.5)
+                        .slice(0, 2);
+                    const front = [...hotFrontSelected, ...coldFrontSelected]
+                        .sort((a, b) => a.number - b.number);
+
+                    // 后区：1个热号 + 1个冷号
+                    const hotBackSelected = [...hotBack]
+                        .sort(() => Math.random() - 0.5)
+                        .slice(0, 1);
+                    const coldBackSelected = [...coldBack]
+                        .sort(() => Math.random() - 0.5)
+                        .slice(0, 1);
+                    const back = [...hotBackSelected, ...coldBackSelected]
+                        .sort((a, b) => a.number - b.number);
+
+                    groups.push({ front, back });
+                }
+                return groups;
+            }
+
+            function displayAnalysis(hotColdAnalysis) {
+                // 生成三组热号
+                const hotGroups = generateHotNumbers(hotColdAnalysis.hotFront, hotColdAnalysis.hotBack);
+                const hotNumbersDiv = document.getElementById('hotNumbers');
+                hotNumbersDiv.innerHTML = '';
+                hotGroups.forEach((group, index) => {
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'group-container';
+                    groupDiv.innerHTML = `
+                        <div class="group-title">第${index + 1}组</div>
+                        <div class="group-numbers">
+                            ${group.front.map(num => `
+                                <div class="number-badge hot-number">
+                                    ${num.number}
+                                    <div class="frequency-label">${(num.rate * 100).toFixed(1)}%</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="group-numbers">
+                            ${group.back.map(num => `
+                                <div class="number-badge hot-number">
+                                    ${num.number}
+                                    <div class="frequency-label">${(num.rate * 100).toFixed(1)}%</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    hotNumbersDiv.appendChild(groupDiv);
+                });
+
+                // 从热号中再生成一组随机组合
+                const extraHotGroup = generateHotNumbers(hotColdAnalysis.hotFront, hotColdAnalysis.hotBack)[0];
+                const extraHotGroupDiv = document.createElement('div');
+                extraHotGroupDiv.className = 'group-container';
+                extraHotGroupDiv.innerHTML = `
+                    <div class="group-title">额外热号组</div>
+                    <div class="group-numbers">
+                        ${extraHotGroup.front.map(num => `
+                            <div class="number-badge hot-number">
+                                ${num.number}
+                                <div class="frequency-label">${(num.rate * 100).toFixed(1)}%</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="group-numbers">
+                        ${extraHotGroup.back.map(num => `
+                            <div class="number-badge hot-number">
+                                ${num.number}
+                                <div class="frequency-label">${(num.rate * 100).toFixed(1)}%</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                hotNumbersDiv.appendChild(extraHotGroupDiv);
+
+                // 生成三组冷号
+                const coldGroups = generateColdNumbers(hotColdAnalysis.coldFront, hotColdAnalysis.coldBack);
+                const coldNumbersDiv = document.getElementById('coldNumbers');
+                coldNumbersDiv.innerHTML = '';
+                coldGroups.forEach((group, index) => {
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'group-container';
+                    groupDiv.innerHTML = `
+                        <div class="group-title">第${index + 1}组</div>
+                        <div class="group-numbers">
+                            ${group.front.map(num => `
+                                <div class="number-badge cold-number">
+                                    ${num.number}
+                                    <div class="frequency-label">${(num.rate * 100).toFixed(1)}%</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="group-numbers">
+                            ${group.back.map(num => `
+                                <div class="number-badge cold-number">
+                                    ${num.number}
+                                    <div class="frequency-label">${(num.rate * 100).toFixed(1)}%</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    coldNumbersDiv.appendChild(groupDiv);
+                });
+
+                // 从冷号中再生成一组随机组合
+                const extraColdGroup = generateColdNumbers(hotColdAnalysis.coldFront, hotColdAnalysis.coldBack)[0];
+                const extraColdGroupDiv = document.createElement('div');
+                extraColdGroupDiv.className = 'group-container';
+                extraColdGroupDiv.innerHTML = `
+                    <div class="group-title">额外冷号组</div>
+                    <div class="group-numbers">
+                        ${extraColdGroup.front.map(num => `
+                            <div class="number-badge cold-number">
+                                ${num.number}
+                                <div class="frequency-label">${(num.rate * 100).toFixed(1)}%</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="group-numbers">
+                        ${extraColdGroup.back.map(num => `
+                            <div class="number-badge cold-number">
+                                ${num.number}
+                                <div class="frequency-label">${(num.rate * 100).toFixed(1)}%</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                coldNumbersDiv.appendChild(extraColdGroupDiv);
+
+                // 生成三组冷热混选
+                const mixedGroups = generateMixedNumbers(
+                    hotColdAnalysis.hotFront,
+                    hotColdAnalysis.hotBack,
+                    hotColdAnalysis.coldFront,
+                    hotColdAnalysis.coldBack
+                );
+                const mixedNumbersDiv = document.getElementById('mixedNumbers');
+                mixedNumbersDiv.innerHTML = '';
+                mixedGroups.forEach((group, index) => {
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'group-container';
+                    groupDiv.innerHTML = `
+                        <div class="group-title">第${index + 1}组</div>
+                        <div class="group-numbers">
+                            ${group.front.map(num => `
+                                <div class="number-badge mixed-number">
+                                    ${num.number}
+                                    <div class="frequency-label">${(num.rate * 100).toFixed(1)}%</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="group-numbers">
+                            ${group.back.map(num => `
+                                <div class="number-badge mixed-number">
+                                    ${num.number}
+                                    <div class="frequency-label">${(num.rate * 100).toFixed(1)}%</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    mixedNumbersDiv.appendChild(groupDiv);
+                });
+
+                // 从混号中再生成一组随机组合
+                const extraMixedGroup = generateMixedNumbers(
+                    hotColdAnalysis.hotFront,
+                    hotColdAnalysis.hotBack,
+                    hotColdAnalysis.coldFront,
+                    hotColdAnalysis.coldBack
+                )[0];
+                const extraMixedGroupDiv = document.createElement('div');
+                extraMixedGroupDiv.className = 'group-container';
+                extraMixedGroupDiv.innerHTML = `
+                    <div class="group-title">额外混号组</div>
+                    <div class="group-numbers">
+                        ${extraMixedGroup.front.map(num => `
+                            <div class="number-badge mixed-number">
+                                ${num.number}
+                                <div class="frequency-label">${(num.rate * 100).toFixed(1)}%</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="group-numbers">
+                        ${extraMixedGroup.back.map(num => `
+                            <div class="number-badge mixed-number">
+                                ${num.number}
+                                <div class="frequency-label">${(num.rate * 100).toFixed(1)}%</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                mixedNumbersDiv.appendChild(extraMixedGroupDiv);
+            }
+
+            function generateRecommendationWithZone(frequency, zoneDistribution) {
+                const frontSorted = Object.entries(frequency.frontFrequency)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5)
+                    .map(([num]) => Number(num))
+                    .sort((a, b) => a - b);
+
+                const backSorted = Object.entries(frequency.backFrequency)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 2)
+                    .map(([num]) => Number(num))
+                    .sort((a, b) => a - b);
+
+                // Consider zone distribution to adjust recommendations
+                // This is a simple example, you might want to implement a more complex logic
+                const frontZoneAdjusted = frontSorted.map(num => {
+                    if (num >= 1 && num <= 15 && zoneDistribution.frontZoneDistribution[0] < zoneDistribution.frontZoneDistribution[1]) {
+                        return num + 15; // Adjust to next zone
+                    }
+                    return num;
+                });
+
+                const backZoneAdjusted = backSorted.map(num => {
+                    if (num >= 1 && num <= 8 && zoneDistribution.backZoneDistribution[0] < zoneDistribution.backZoneDistribution[1]) {
+                        return num + 2; // Adjust to next zone
+                    }
+                    return num;
+                });
+
+                return {
+                    frontRecommendation: frontZoneAdjusted,
+                    backRecommendation: backZoneAdjusted
+                };
+            }
+
+            function displayHistory(data) {
+                const historyList = document.getElementById('historyList');
+                historyList.innerHTML = '';
+
+                data.forEach(item => {
+                    const numbers = item.lotteryDrawResult.split(' ');
+                    const frontNumbers = numbers.slice(0, 5).map(Number);
+                    const backNumbers = numbers.slice(5).map(Number);
+
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item';
+
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'history-info';
+
+                    const dateSpan = document.createElement('span');
+                    dateSpan.className = 'history-date';
+                    dateSpan.textContent = item.lotteryDrawTime;
+
+                    // 计算前区分布比例
+                    const frontDistribution = [0, 0, 0];
+                    frontNumbers.forEach(num => {
+                        if (num >= 1 && num <= 15) frontDistribution[0]++;
+                        else if (num >= 16 && num <= 25) frontDistribution[1]++;
+                        else if (num >= 26 && num <= 35) frontDistribution[2]++;
+                    });
+
+                    // 计算后区分布比例
+                    const backDistribution = [0, 0];
+                    backNumbers.forEach(num => {
+                        if (num >= 1 && num <= 8) backDistribution[0]++;
+                        else if (num >= 9 && num <= 12) backDistribution[1]++;
+                    });
+
+                    // 显示分布比例
+                    const distributionSpan = document.createElement('span');
+                    distributionSpan.className = 'distribution-info';
+                    distributionSpan.textContent = `前区: ${frontDistribution.join('-')} 后区: ${backDistribution.join('-')}`;
+
+                    const numbersDiv = document.createElement('div');
+                    numbersDiv.className = 'history-numbers';
+
+                    frontNumbers.forEach(num => {
+                        const numSpan = document.createElement('span');
+                        numSpan.className = 'history-number front-number';
+                        numSpan.textContent = num;
+                        numbersDiv.appendChild(numSpan);
+                    });
+
+                    backNumbers.forEach(num => {
+                        const numSpan = document.createElement('span');
+                        numSpan.className = 'history-number back-number';
+                        numSpan.textContent = num;
+                        numbersDiv.appendChild(numSpan);
+                    });
+
+                    infoDiv.appendChild(dateSpan);
+                    infoDiv.appendChild(distributionSpan);
+
+                    historyItem.appendChild(infoDiv);
+                    historyItem.appendChild(numbersDiv);
+                    historyList.appendChild(historyItem);
+                });
+            }
+
+            function displayResults(frequency, recommendation, historyData) {
+                // 显示推荐号码
+                document.getElementById('recommendation').innerHTML = `
+                    <div class="recommendation-numbers">
+                        <span>前区：</span>${recommendation.frontRecommendation.map(num => `<span class="number-badge red-ball">${num}</span>`).join(' ')}
+                        <span>后区：</span>${recommendation.backRecommendation.map(num => `<span class="number-badge blue-ball">${num}</span>`).join(' ')}
+                    </div>
+                `;
+
+                // 添加冷热号分析
+                const totalDraws = historyData.length;
+                const hotColdAnalysis = analyzeHotColdNumbers(frequency, totalDraws);
+                displayAnalysis(hotColdAnalysis);
+
+                // 显示历史数据
+                displayHistory(historyData);
+
+                // 显示前区频率分布
+                const frontGrid = document.getElementById('frontGrid');
+                frontGrid.innerHTML = '';
+                for (let i = 1; i <= 35; i++) {
+                    const count = frequency.frontFrequency[i] || 0;
+                    const isRecommended = recommendation.frontRecommendation.includes(i);
+                    frontGrid.innerHTML += `
+                        <div class="number-cell" style="${isRecommended ? 'background-color: #c8e6c9;' : ''}">
+                            ${i}: ${count}
+                        </div>
+                    `;
+                }
+
+                // 显示后区频率分布
+                const backGrid = document.getElementById('backGrid');
+                backGrid.innerHTML = '';
+                for (let i = 1; i <= 12; i++) {
+                    const count = frequency.backFrequency[i] || 0;
+                    const isRecommended = recommendation.backRecommendation.includes(i);
+                    backGrid.innerHTML += `
+                        <div class="number-cell" style="${isRecommended ? 'background-color: #c8e6c9;' : ''}">
+                            ${i}: ${count}
+                        </div>
+                    `;
+                }
+            }
+
+            function filterDataByTimeRange(data, days) {
+                const now = new Date();
+                return data.filter(item => {
+                    const drawDate = new Date(item.lotteryDrawTime);
+                    const diffTime = Math.abs(now - drawDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return diffDays <= days;
+                });
+            }
+
+            function drawZoneTrendChart(data) {
+                const ctx = document.getElementById('zoneTrendChart').getContext('2d');
+                const labels = data.map(item => item.lotteryDrawTime);
+
+                const frontZoneData = data.map(item => {
+                    const numbers = item.lotteryDrawResult.split(' ').slice(0, 5).map(Number);
+                    const zoneCounts = [0, 0, 0];
+                    numbers.forEach(num => {
+                        if (num >= 1 && num <= 15) zoneCounts[0]++;
+                        else if (num >= 16 && num <= 25) zoneCounts[1]++;
+                        else if (num >= 26 && num <= 35) zoneCounts[2]++;
+                    });
+                    return zoneCounts;
+                });
+
+                const backZoneData = data.map(item => {
+                    const numbers = item.lotteryDrawResult.split(' ').slice(5).map(Number);
+                    const zoneCounts = [0, 0];
+                    numbers.forEach(num => {
+                        if (num >= 1 && num <= 8) zoneCounts[0]++;
+                        else if (num >= 9 && num <= 12) zoneCounts[1]++;
+                    });
+                    return zoneCounts;
+                });
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '前区第一区 (1-15)',
+                                data: frontZoneData.map(zones => zones[0]),
+                                borderColor: 'rgba(255, 99, 132, 0.5)',
+                                fill: false
+                            },
+                            {
+                                label: '前区第二区 (16-25)',
+                                data: frontZoneData.map(zones => zones[1]),
+                                borderColor: 'rgba(54, 162, 235, 0.5)',
+                                fill: false
+                            },
+                            {
+                                label: '前区第三区 (26-35)',
+                                data: frontZoneData.map(zones => zones[2]),
+                                borderColor: 'rgba(75, 192, 192, 0.5)',
+                                fill: false
+                            },
+                            {
+                                label: '后区第一区 (1-8)',
+                                data: backZoneData.map(zones => zones[0]),
+                                borderColor: 'rgba(153, 102, 255, 0.5)',
+                                fill: false
+                            },
+                            {
+                                label: '后区第二区 (9-12)',
+                                data: backZoneData.map(zones => zones[1]),
+                                borderColor: 'rgba(255, 159, 64, 0.5)',
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: '日期'
+                                }
+                            },
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: '数量'
+                                },
+                                suggestedMin: 0,
+                                suggestedMax: 5
+                            }
+                        }
+                    }
+                });
+            }
+
+            function generateNumbersByType(type, frequency, frontZoneInput, backZoneInput) {
+                const frontZoneTargets = frontZoneInput.split('-').map(Number);
+                const backZoneTargets = backZoneInput.split('-').map(Number);
+
+                const frontNumbers = Object.entries(frequency.frontFrequency)
+                    .sort((a, b) => type === 'hot' ? b[1] - a[1] : a[1] - b[1])
+                    .map(([num]) => Number(num));
+
+                const backNumbers = Object.entries(frequency.backFrequency)
+                    .sort((a, b) => type === 'hot' ? b[1] - a[1] : a[1] - b[1])
+                    .map(([num]) => Number(num));
+
+                const frontRecommendation = [];
+                const backRecommendation = [];
+
+                // Select front numbers based on zone targets
+                frontZoneTargets.forEach((target, zoneIndex) => {
+                    let count = 0;
+                    frontNumbers.forEach(num => {
+                        if (count < target) {
+                            if ((zoneIndex === 0 && num >= 1 && num <= 15) ||
+                                (zoneIndex === 1 && num >= 16 && num <= 25) ||
+                                (zoneIndex === 2 && num >= 26 && num <= 35)) {
+                                frontRecommendation.push(num);
+                                count++;
+                            }
+                        }
+                    });
+                });
+
+                // Select back numbers based on zone targets
+                backZoneTargets.forEach((target, zoneIndex) => {
+                    let count = 0;
+                    backNumbers.forEach(num => {
+                        if (count < target) {
+                            if ((zoneIndex === 0 && num >= 1 && num <= 8) ||
+                                (zoneIndex === 1 && num >= 9 && num <= 12)) {
+                                backRecommendation.push(num);
+                                count++;
+                            }
+                        }
+                    });
+                });
+
+                return {
+                    frontRecommendation: frontRecommendation.sort((a, b) => a - b),
+                    backRecommendation: backRecommendation.sort((a, b) => a - b)
+                };
+            }
+
+            function validateZoneInput() {
+                const frontZoneSum = parseInt(document.getElementById('frontZoneInput1').value) +
+                    parseInt(document.getElementById('frontZoneInput2').value) +
+                    parseInt(document.getElementById('frontZoneInput3').value);
+                const backZoneSum = parseInt(document.getElementById('backZoneInput1').value) +
+                    parseInt(document.getElementById('backZoneInput2').value);
+
+                const errorMessage = document.getElementById('errorMessage');
+                if (frontZoneSum !== 5 || backZoneSum !== 2) {
+                    errorMessage.style.display = 'block';
+                    return false;
+                } else {
+                    errorMessage.style.display = 'none';
+                    return true;
+                }
+            }
+
+            function generateAndDisplayNumbers() {
+                if (!validateZoneInput()) return;
+
+                const frontZoneInput = document.getElementById('frontZoneInput1').value + '-' +
+                    document.getElementById('frontZoneInput2').value + '-' +
+                    document.getElementById('frontZoneInput3').value;
+                const backZoneInput = document.getElementById('backZoneInput1').value + '-' +
+                    document.getElementById('backZoneInput2').value;
+
+                const analysis = analyzeFrequencyAndZone(data.value.list);
+
+                // Generate all types
+                const hotRecommendation = generateNumbersByType('hot', analysis, frontZoneInput, backZoneInput);
+                const coldRecommendation = generateNumbersByType('cold', analysis, frontZoneInput, backZoneInput);
+                const mixedRecommendation = {
+                    frontRecommendation: [
+                        ...hotRecommendation.frontRecommendation.slice(0, 3),
+                        ...coldRecommendation.frontRecommendation.slice(0, 2)
+                    ].sort((a, b) => a - b),
+                    backRecommendation: [
+                        ...hotRecommendation.backRecommendation.slice(0, 1),
+                        ...coldRecommendation.backRecommendation.slice(0, 1)
+                    ].sort((a, b) => a - b)
+                };
+
+                const manualRecommendationDiv = document.getElementById('manualRecommendation');
+                manualRecommendationDiv.style.display = 'block';
+                manualRecommendationDiv.innerHTML = `
+                    <h3>热号</h3>
+                    <div class="manual-recommendation-numbers">
+                        <span>前区：</span>${hotRecommendation.frontRecommendation.map(num => `<span class="number-badge red-ball">${num}</span>`).join(' ')}
+                        <span>后区：</span>${hotRecommendation.backRecommendation.map(num => `<span class="number-badge blue-ball">${num}</span>`).join(' ')}
+                    </div>
+                    <h3>冷号</h3>
+                    <div class="manual-recommendation-numbers">
+                        <span>前区：</span>${coldRecommendation.frontRecommendation.map(num => `<span class="number-badge red-ball">${num}</span>`).join(' ')}
+                        <span>后区：</span>${coldRecommendation.backRecommendation.map(num => `<span class="number-badge blue-ball">${num}</span>`).join(' ')}
+                    </div>
+                    <h3>混号</h3>
+                    <div class="manual-recommendation-numbers">
+                        <span>前区：</span>${mixedRecommendation.frontRecommendation.map(num => `<span class="number-badge red-ball">${num}</span>`).join(' ')}
+                        <span>后区：</span>${mixedRecommendation.backRecommendation.map(num => `<span class="number-badge blue-ball">${num}</span>`).join(' ')}
+                    </div>
+                `;
+            }
+
+            const toggleConfigBtn = document.getElementById('toggleConfigBtn');
+            const manualGenerateBtn = document.getElementById('manualGenerateBtn');
+            const frontZoneInput = document.getElementById('frontZoneInput1');
+            const backZoneInput = document.getElementById('backZoneInput1');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const timeRangeSelect = document.getElementById('timeRangeSelect');
+            const historyDateSelect = document.getElementById('historyDateSelect');
+
+            // 拖拽功能
+            const floatingConfig = document.getElementById('floatingConfig');
+            let isDragging = false;
+            let offsetX, offsetY;
+
+            floatingConfig.addEventListener('mousedown', (e) => {
+                if (e.target === floatingConfig || e.target === document.getElementById('toggleConfigBtn')) {
+                    isDragging = true;
+                    offsetX = e.clientX - floatingConfig.offsetLeft;
+                    offsetY = e.clientY - floatingConfig.offsetTop;
+                }
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    floatingConfig.style.left = `${e.clientX - offsetX}px`;
+                    floatingConfig.style.top = `${e.clientY - offsetY}px`;
+                    floatingConfig.style.right = 'auto'; // 取消右侧定位
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            // 显示/隐藏面板
+            document.getElementById('toggleConfigBtn').addEventListener('click', () => {
+                const configPanel = document.getElementById('configPanel');
+                configPanel.classList.toggle('show');
+                if (configPanel.classList.contains('show')) {
+                    configPanel.style.display = 'block';
+                    document.getElementById('toggleConfigBtn').textContent = '隐藏配置';
+                } else {
+                    configPanel.style.display = 'none';
+                    document.getElementById('toggleConfigBtn').textContent = '手工选号';
+                }
+            });
+
+            // 点击父面板空白处隐藏手工选号面板
+            document.getElementById('mainContainer').addEventListener('click', (e) => {
+                const configPanel = document.getElementById('configPanel');
+                const toggleConfigBtn = document.getElementById('toggleConfigBtn');
+                if (configPanel.classList.contains('show') && !configPanel.contains(e.target) && e.target !== toggleConfigBtn) {
+                    configPanel.style.display = 'none';
+                    configPanel.classList.remove('show');
+                    toggleConfigBtn.textContent = '手工选号';
+                }
+            });
+
+            if (manualGenerateBtn) {
+                manualGenerateBtn.addEventListener('click', generateAndDisplayNumbers);
+            }
+
+            if (frontZoneInput) {
+                frontZoneInput.addEventListener('input', () => {
+                    validateZoneInput();
+                });
+            }
+
+            if (backZoneInput) {
+                backZoneInput.addEventListener('input', () => {
+                    validateZoneInput();
+                });
+            }
+
+            if (analyzeBtn) {
+                analyzeBtn.addEventListener('click', async () => {
+                    showLoading();
+                    try {
+                        const response = await fetch(API_URL, {
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('获取数据失败');
+                        }
+
+                        data = await response.json();
+                        const analysis = analyzeFrequencyAndZone(data.value.list);
+                        const recommendation = generateRecommendationWithZone(analysis, analysis);
+
+                        showResult();
+                        displayResults(analysis, recommendation, data.value.list);
+
+                        // Draw initial chart with default time range (e.g., one week)
+                        const initialDays = parseInt(timeRangeSelect.value, 10);
+                        const filteredData = filterDataByTimeRange(data.value.list, initialDays);
+                        drawZoneTrendChart(filteredData);
+
+                        // Generate numbers after data is loaded
+                        generateAndDisplayNumbers();
+
+                        // Update history list with all data initially
+                        updateHistoryList(data.value.list);
+                    } catch (error) {
+                        showError('获取数据失败，请检查网络连接或稍后重试。');
+                    }
+                });
+            }
+
+            if (timeRangeSelect) {
+                timeRangeSelect.addEventListener('change', (event) => {
+                    const days = parseInt(event.target.value, 10);
+                    const filteredData = filterDataByTimeRange(data.value.list, days);
+                    drawZoneTrendChart(filteredData);
+                });
+            }
+
+            if (historyDateSelect) {
+                historyDateSelect.addEventListener('change', (event) => {
+                    const selectedDate = event.target.value ? new Date(event.target.value) : null;
+                    const filteredData = selectedDate
+                        ? data.value.list.filter(item => {
+                            const drawDate = new Date(item.lotteryDrawTime);
+                            return drawDate >= selectedDate;
+                        })
+                        : data.value.list; // 如果没有选择日期，显示所有数据
+                    updateHistoryList(filteredData);
+                });
+            }
+
+            function updateHistoryList(filteredData) {
+                const historyList = document.getElementById('historyList');
+                historyList.innerHTML = ''; // 清空历史记录列表
+
+                filteredData.forEach(item => {
+                    const listItem = document.createElement('div');
+                    listItem.className = 'history-item';
+
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'history-info';
+
+                    const dateSpan = document.createElement('span');
+                    dateSpan.className = 'history-date';
+                    dateSpan.textContent = new Date(item.lotteryDrawTime).toLocaleDateString();
+
+                    const distributionSpan = document.createElement('span');
+                    distributionSpan.className = 'distribution-info';
+
+                    const numbersDiv = document.createElement('div');
+                    numbersDiv.className = 'history-numbers';
+
+                    const numbers = item.lotteryDrawResult.split(' ');
+                    const frontNumbers = numbers.slice(0, 5).map(Number);
+                    const backNumbers = numbers.slice(5).map(Number);
+
+                    frontNumbers.forEach(num => {
+                        const numSpan = document.createElement('span');
+                        numSpan.className = 'history-number front-number'; // 前区红色
+                        numSpan.textContent = num;
+                        numbersDiv.appendChild(numSpan);
+                    });
+
+                    backNumbers.forEach(num => {
+                        const numSpan = document.createElement('span');
+                        numSpan.className = 'history-number back-number'; // 后区蓝色
+                        numSpan.textContent = num;
+                        numbersDiv.appendChild(numSpan);
+                    });
+
+                    // 计算并显示分布比例
+                    const frontDistribution = [0, 0, 0];
+                    frontNumbers.forEach(num => {
+                        if (num >= 1 && num <= 15) frontDistribution[0]++;
+                        else if (num >= 16 && num <= 25) frontDistribution[1]++;
+                        else if (num >= 26 && num <= 35) frontDistribution[2]++;
+                    });
+
+                    const backDistribution = [0, 0];
+                    backNumbers.forEach(num => {
+                        if (num >= 1 && num <= 8) backDistribution[0]++;
+                        else if (num >= 9 && num <= 12) backDistribution[1]++;
+                    });
+
+                    distributionSpan.textContent = `前区: ${frontDistribution.join('-')} 后区: ${backDistribution.join('-')}`;
+
+                    infoDiv.appendChild(dateSpan);
+                    infoDiv.appendChild(distributionSpan);
+
+                    listItem.appendChild(infoDiv);
+                    listItem.appendChild(numbersDiv);
+                    historyList.appendChild(listItem);
+                });
+            }
+        });
+    </script>
+    <script>
+        // {
+        // "dataFrom": "",
+        // "emptyFlag": false,
+        // "errorCode": "0",
+        // "errorMessage": "处理成功",
+        // "success": true,
+        // "value": {
+        //     "lastPoolDraw": {
+        //         "lotteryDrawNum": "25041",
+        //         "lotteryDrawResult": "03 04 21 22 27 05 11",
+        //         "lotteryDrawTime": "2025-04-16",
+        //         "lotteryGameName": "超级大乐透",
+        // 从彩票平台公开系统获取历史数据
+        async function fetchHistoryData() {
+            try {
+                const response = await fetch('https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=300000000&isVerify=1&pageNo=1'); // 替换为实际的API地址
+                const data = await response.json();
+                // 提取彩票号码
+                const historyData = data.value.list.map(item => {
+                    const numbers = item.lotteryDrawResult.split(' ');
+                    return {
+                        red: numbers.slice(0, 5).map(Number),
+                        blue: numbers.slice(5, 7).map(Number)
+                    };
+                });
+                return historyData;
+            } catch (error) {
+                console.error('Error fetching history data:', error);
+                return [];
+            }
+        }
+
+        // 分析历史数据，计算每个号码的出现频率
+        async function analyzeHistory() {
+            const historyData = await fetchHistoryData();
+            const redFrequency = new Array(36).fill(0);
+            const blueFrequency = new Array(13).fill(0);
+
+            historyData.forEach(data => {
+                data.red.forEach(num => redFrequency[num]++);
+                data.blue.forEach(num => blueFrequency[num]++);
+            });
+
+            return { redFrequency, blueFrequency };
+        }
+
+        async function generateNumbers() {
+            const numbersDiv = document.getElementById('numbers');
+            numbersDiv.innerHTML = '';
+
+            const { redFrequency, blueFrequency } = await analyzeHistory();
+
+            // 生成5个红球（1-35），基于历史频率加权随机
+            let redNumbers = [];
+            while (redNumbers.length < 5) {
+                let num = weightedRandom(redFrequency, 1, 35);
+                if (!redNumbers.includes(num)) {
+                    redNumbers.push(num);
+                }
+            }
+            redNumbers.sort((a, b) => a - b);
+
+            // 生成2个蓝球（1-12），基于历史频率加权随机
+            let blueNumbers = [];
+            while (blueNumbers.length < 2) {
+                let num = weightedRandom(blueFrequency, 1, 12);
+                if (!blueNumbers.includes(num)) {
+                    blueNumbers.push(num);
+                }
+            }
+            blueNumbers.sort((a, b) => a - b);
+
+            // 显示红球
+            redNumbers.forEach(num => {
+                let div = document.createElement('div');
+                div.className = 'number red';
+                div.textContent = num;
+                numbersDiv.appendChild(div);
+            });
+
+            // 显示蓝球
+            blueNumbers.forEach(num => {
+                let div = document.createElement('div');
+                div.className = 'number blue';
+                div.textContent = num;
+                numbersDiv.appendChild(div);
+            });
+        }
+
+        // 加权随机函数
+        function weightedRandom(frequencyArray, min, max) {
+            // 创建一个新的数组，只包含min到max范围内的频率
+            const relevantFrequencies = frequencyArray.slice(min, max + 1);
+            const totalWeight = relevantFrequencies.reduce((a, b) => a + b, 0);
+            let random = Math.random() * totalWeight;
+            for (let i = min; i <= max; i++) {
+                random -= frequencyArray[i];
+                if (random < 0) {
+                    return i;
+                }
+            }
+            return max;
+        }
+    </script>
+</body>
+
+</html>
